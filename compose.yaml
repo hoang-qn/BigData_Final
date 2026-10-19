@@ -1,0 +1,78 @@
+name: bigdata-final
+
+services:
+  namenode:
+    image: ghcr.io/apache/hadoop:3.5.0
+    hostname: namenode
+    user: "0:0"
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["exec /scripts/start-namenode.sh"]
+    environment:
+      HADOOP_HOME: /opt/hadoop
+      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
+      HADOOP_USER_NAME: root
+    volumes:
+      - ./config/hadoop:/opt/hadoop/etc/hadoop:ro
+      - ./scripts:/scripts:ro
+      - ./data:/input:ro
+      - namenode_data:/hadoop/dfs/name
+    ports:
+      - "9870:9870"
+    restart: unless-stopped
+
+  datanode1:
+    image: ghcr.io/apache/hadoop:3.5.0
+    hostname: datanode1
+    user: "0:0"
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["exec hdfs datanode"]
+    environment:
+      HADOOP_HOME: /opt/hadoop
+      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
+      HADOOP_USER_NAME: root
+    volumes:
+      - ./config/hadoop:/opt/hadoop/etc/hadoop:ro
+      - datanode1_data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+    restart: unless-stopped
+
+  datanode2:
+    image: ghcr.io/apache/hadoop:3.5.0
+    hostname: datanode2
+    user: "0:0"
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["exec hdfs datanode"]
+    environment:
+      HADOOP_HOME: /opt/hadoop
+      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
+      HADOOP_USER_NAME: root
+    volumes:
+      - ./config/hadoop:/opt/hadoop/etc/hadoop:ro
+      - datanode2_data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+    restart: unless-stopped
+
+  datanode3:
+    image: ghcr.io/apache/hadoop:3.5.0
+    hostname: datanode3
+    user: "0:0"
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["exec hdfs datanode"]
+    environment:
+      HADOOP_HOME: /opt/hadoop
+      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
+      HADOOP_USER_NAME: root
+    volumes:
+      - ./config/hadoop:/opt/hadoop/etc/hadoop:ro
+      - datanode3_data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+    restart: unless-stopped
+
+volumes:
+  namenode_data:
+  datanode1_data:
+  datanode2_data:
+  datanode3_data:
