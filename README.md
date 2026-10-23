@@ -107,7 +107,7 @@ Tắt toàn bộ container nhưng giữ dữ liệu HDFS:
 docker compose --profile audit --profile spark-cluster down
 ```
 
-Hôm sau, mở Docker Desktop rồi chạy lại:
+Lần tới, mở Docker Desktop rồi chạy lại:
 
 ```bash
 ./scripts/start_notebooks.sh
