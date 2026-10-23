@@ -1,0 +1,9 @@
+.git/
+.DS_Store
+data/
+/hotel_bookings_synthetic_200MB.csv
+reports/
+notebooks/
+Exercises/
+docs/
+__pycache__/

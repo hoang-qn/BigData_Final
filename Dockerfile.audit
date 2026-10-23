@@ -1,0 +1,27 @@
+FROM python:3.12-slim-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-17-jre-headless libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --no-cache-dir \
+    pandas==2.2.3 \
+    pyspark==4.1.2 \
+    scikit-learn==1.6.1 \
+    xgboost-cpu==3.4.1 \
+    matplotlib==3.10.1 \
+    requests==2.34.2 \
+    jupyterlab==4.6.3
+
+RUN python -m pip install --no-cache-dir lightgbm==4.7.0
+
+RUN ln -s "$(python -c 'import os, pyspark; print(os.path.dirname(pyspark.__file__))')" /opt/spark
+
+ENV SPARK_HOME=/opt/spark \
+    PATH="/opt/spark/bin:${PATH}" \
+    PYSPARK_PYTHON=/usr/local/bin/python \
+    PYSPARK_DRIVER_PYTHON=/usr/local/bin/python
+
+WORKDIR /workspace

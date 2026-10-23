@@ -1,5 +1,20 @@
 name: bigdata-final
 
+x-spark-runtime: &spark-runtime
+  build:
+    context: .
+    dockerfile: Dockerfile.audit
+  image: bigdata-final-audit:python3.12-spark4.1.2
+  environment:
+    HADOOP_CONF_DIR: /opt/hadoop-conf
+    HADOOP_USER_NAME: root
+    PYSPARK_PYTHON: /usr/local/bin/python
+    SPARK_NO_DAEMONIZE: "true"
+  volumes:
+    - ./config/hadoop:/opt/hadoop-conf:ro
+  profiles:
+    - spark-cluster
+
 services:
   namenode:
     image: ghcr.io/apache/hadoop:3.5.0
@@ -17,7 +32,7 @@ services:
       - ./data:/input:ro
       - namenode_data:/hadoop/dfs/name
     ports:
-      - "9870:9870"
+      - "127.0.0.1:9870:9870"
     restart: unless-stopped
 
   datanode1:
@@ -70,6 +85,133 @@ services:
     depends_on:
       - namenode
     restart: unless-stopped
+
+  spark-master:
+    <<: *spark-runtime
+    hostname: spark-master
+    command:
+      [
+        "spark-class",
+        "org.apache.spark.deploy.master.Master",
+        "--host",
+        "spark-master",
+        "--port",
+        "7077",
+        "--webui-port",
+        "8080",
+      ]
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+
+  spark-worker-1:
+    <<: *spark-runtime
+    hostname: spark-worker-1
+    command:
+      [
+        "spark-class",
+        "org.apache.spark.deploy.worker.Worker",
+        "spark://spark-master:7077",
+        "--cores",
+        "1",
+        "--memory",
+        "1G",
+        "--webui-port",
+        "8081",
+      ]
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      - spark-master
+    restart: unless-stopped
+
+  spark-worker-2:
+    <<: *spark-runtime
+    hostname: spark-worker-2
+    command:
+      [
+        "spark-class",
+        "org.apache.spark.deploy.worker.Worker",
+        "spark://spark-master:7077",
+        "--cores",
+        "1",
+        "--memory",
+        "1G",
+        "--webui-port",
+        "8081",
+      ]
+    ports:
+      - "127.0.0.1:8082:8081"
+    depends_on:
+      - spark-master
+    restart: unless-stopped
+
+  spark-worker-3:
+    <<: *spark-runtime
+    hostname: spark-worker-3
+    command:
+      [
+        "spark-class",
+        "org.apache.spark.deploy.worker.Worker",
+        "spark://spark-master:7077",
+        "--cores",
+        "1",
+        "--memory",
+        "1G",
+        "--webui-port",
+        "8081",
+      ]
+    ports:
+      - "127.0.0.1:8083:8081"
+    depends_on:
+      - spark-master
+    restart: unless-stopped
+
+  audit:
+    build:
+      context: .
+      dockerfile: Dockerfile.audit
+    image: bigdata-final-audit:python3.12-spark4.1.2
+    hostname: audit
+    working_dir: /workspace
+    user: "0:0"
+    command:
+      [
+        "jupyter",
+        "lab",
+        "--allow-root",
+        "--ip=0.0.0.0",
+        "--port=8888",
+        "--no-browser",
+        "--IdentityProvider.token=",
+        "--ServerApp.root_dir=/workspace/notebooks",
+      ]
+    environment:
+      HADOOP_CONF_DIR: /opt/hadoop-conf
+      HADOOP_USER_NAME: root
+      PYSPARK_PYTHON: /usr/local/bin/python
+      PYSPARK_DRIVER_PYTHON: /usr/local/bin/python
+      SPARK_MASTER: ${SPARK_MASTER:-spark://spark-master:7077}
+      SPARK_DRIVER_HOST: audit
+      SPARK_DRIVER_BIND_ADDRESS: 0.0.0.0
+      SPARK_EXECUTOR_CORES: "1"
+      SPARK_CORES_MAX: "3"
+    volumes:
+      - ./config/hadoop:/opt/hadoop-conf:ro
+      - ./notebooks:/workspace/notebooks
+      - ./data/cleaned/pandas:/workspace/data/cleaned/pandas:ro
+      - ./models:/workspace/models
+      - ./reports:/workspace/reports
+    ports:
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:4040:4040"
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+      - datanode3
+    profiles:
+      - audit
 
 volumes:
   namenode_data:

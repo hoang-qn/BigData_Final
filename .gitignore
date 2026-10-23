@@ -1,2 +1,9 @@
 # Each teammate keeps the large dataset locally.
 data/*.csv
+/data/cleaned/
+/hotel_bookings_synthetic_200MB.csv
+/models/
+reports/*.json
+__pycache__/
+notebooks/.ipynb_checkpoints/
+.DS_Store
